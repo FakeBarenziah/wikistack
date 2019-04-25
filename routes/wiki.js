@@ -1,52 +1,63 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { addPage, wikiPage, main } = require('../views');
-const { db, Page, User } = require('../models');
+const { addPage, wikiPage, main, editPage } = require("../views");
+const { db, Page, User } = require("../models");
 
-router.get('/', async (req, res, next) => {
-	res.send(main(await Page.findAll()));
+router.get("/", async (req, res, next) => {
+  res.send(main(await Page.findAll()));
 });
 
-router.post('/', async (req, res, next) => {
-	try {
-		const [ user, wasCreated ] = await User.findOrCreate({
-			where: {
-				name: req.body.name,
-				email: req.body.email
-			}
-		});
+router.post("/", async (req, res, next) => {
+  try {
+    const [user, wasCreated] = await User.findOrCreate({
+      where: {
+        name: req.body.name,
+        email: req.body.email
+      }
+    });
 
-		const page = await Page.create(req.body);
+    const page = await Page.create(req.body);
 
-		page.setAuthor(user);
+    page.setAuthor(user);
 
-		await page.save();
-		res.redirect(`/wiki/${page.slug}`);
-	} catch (error) {
-		next(error);
-	}
+    await page.save();
+    res.redirect(`/wiki/${page.slug}`);
+  } catch (error) {
+    next(error);
+  }
 });
 
-router.get('/add', (req, res, next) => {
-	console.log('made it to wiki');
-	res.send(addPage());
+router.get("/add", (req, res, next) => {
+  console.log("made it to wiki");
+  res.send(addPage());
 });
 
-router.get('/:slug', async (req, res, next) => {
-	try {
-		const page = await Page.findOne({
-			where: {
-				slug: req.params.slug
-			}
-		});
+router.get("/:slug", async (req, res, next) => {
+  try {
+    const page = await Page.findOne({
+      where: {
+        slug: req.params.slug
+      }
+    });
+    if (!page) throw "Page not found. SORRY!";
+    const user = await User.findByPk(page.authorId);
 
-		const user = await User.findByPk(page.authorId);
+    res.send(wikiPage(page, user));
+    // res.json(page);
+  } catch (err) {
+    next(err);
+  }
+});
 
-		res.send(wikiPage(page, user));
-		// res.json(page);
-	} catch (err) {
-		next(err);
-	}
+router.get("/:slug/edit", async (req, res, next) => {
+  const page = await Page.findOne({
+    where: {
+      slug: req.params.slug
+    }
+  });
+  const author = await User.findByPk(page.authorId);
+
+  res.send(editPage(page, author));
 });
 
 module.exports = router;
