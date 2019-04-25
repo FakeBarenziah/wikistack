@@ -6,7 +6,7 @@ const Page = db.define('page', {
 		type: Sequelize.STRING,
 		allowNull: false
 	},
-	Slug: {
+	slug: {
 		type: Sequelize.STRING,
 		allowNull: false
 	},
@@ -17,6 +17,14 @@ const Page = db.define('page', {
 	status: {
 		type: Sequelize.ENUM('open', 'closed')
 	}
+});
+
+function generateSlug(title) {
+	return title.replace(/\s+/g, '_').replace(/\W/g, '');
+}
+
+Page.beforeValidate((pageInstance, optionsObject) => {
+	pageInstance.slug = generateSlug(pageInstance.title);
 });
 
 const User = db.define('user', {

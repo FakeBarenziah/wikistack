@@ -8,7 +8,17 @@ router.get('/', async (req, res, next) => {
 });
 
 router.post('/', async (req, res, next) => {
-	res.send(await Page.findAll());
+	const page = new Page({
+		title: req.body.title,
+		content: req.body.content
+	});
+
+	try {
+		await page.save();
+		res.redirect('/');
+	} catch (error) {
+		next(error);
+	}
 });
 
 router.get('/add', (req, res, next) => {
